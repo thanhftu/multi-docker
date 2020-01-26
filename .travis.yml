@@ -8,15 +8,27 @@ before_install:
 script:
   - docker run thanhdhnt/react-test npm test -- --coverage
 
-deploy:
-  provider: elasticbeanstalk
-  region: "us-east-1"
-  app: "docker-react"
-  env: "DockerReact-env"
-  bucket_name: "elasticbeanstalk-us-east-1-094140934317"
-  bucket_path: "docker-react"
-  on:
-    branch: master
-  access_key_id: $AWS_ACCESS_KEY
-  secret_access_key:
-    secure: "$AWS_SECRET_KEY"
+after_success:
+  - docker build -t thanhdhnt/multi-client ./client
+  - docker build -t thanhdhnt/multi-nginx ./nginx
+  - docker build -t thanhdhnt/multi-server ./server
+  - docker build -t thanhdhnt/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push thanhdhnt/multi-client
+  - docker push thanhdhnt/multi-nginx
+  - docker push thanhdhnt/multi-server
+  - docker push thanhdhnt/multi-worker
+# deploy:
+#   provider: elasticbeanstalk
+#   region: "us-east-1"
+#   app: "docker-react"
+#   env: "DockerReact-env"
+#   bucket_name: "elasticbeanstalk-us-east-1-094140934317"
+#   bucket_path: "docker-react"
+#   on:
+#     branch: master
+#   access_key_id: $AWS_ACCESS_KEY
+#   secret_access_key:
+#     secure: "$AWS_SECRET_KEY"
